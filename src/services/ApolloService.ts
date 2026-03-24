@@ -16,8 +16,8 @@ export class ApolloService {
 	private static BASE_URL = "https://api.apollo.io/v1";
 
 	/**
-	 * CTOやFounderを検索します。
-	 * @param titles 職種タイトルのリスト
+	 * 搜索CTO或创始人。
+	 * @param titles 职位名称列表
 	 */
 	static async searchLeads(
 		titles: string[] = ["CTO", "Founder"],
@@ -27,7 +27,7 @@ export class ApolloService {
 
 		try {
 			// POST https://api.apollo.io/api/v1/mixed_people/api_search
-			// フィルタはJSONボディで送るのが推奨
+			// 建议通过JSON正文发送筛选条件
 			const response = await fetch(
 				`${ApolloService.BASE_URL}/mixed_people/api_search`,
 				{
@@ -49,10 +49,10 @@ export class ApolloService {
 
 			if (!response.ok) {
 				const errorText = await response.text();
-				// Free PlanなどでAPIアクセス権限がない場合は、エラーを投げずに空配列を返す（既存のリードで続行するため）
+				// 如果是免费套餐等没有API访问权限的情况，不抛出错误，返回空数组（以便使用现有潜在客户继续运行）
 				if (response.status === 403) {
 					console.warn(
-						"⚠️ Apollo API Access Denied (403): Free Planでは検索APIが利用できない可能性があります。ダッシュボードからの手動追加、またはプランのアップグレードを検討してください。",
+						"⚠️ Apollo API Access Denied (403): 免费套餐可能无法使用搜索API。请考虑从仪表盘手动添加，或升级套餐。",
 					);
 					return { people: [] };
 				}
@@ -62,7 +62,7 @@ export class ApolloService {
 			return (await response.json()) as { people: ApolloPerson[] };
 		} catch (error) {
 			console.error("Apollo Search Error:", error);
-			return { people: [] }; // ワークフロー全体を止めないよう、エラー時は空で返す
+			return { people: [] }; // 为防止整个工作流停止，出错时返回空数组
 		}
 	}
 }
