@@ -1,3 +1,4 @@
+```typescript
 import { type ApolloPerson, ApolloService } from "./ApolloService";
 import { InstantlyService } from "./InstantlyService";
 import { LeadService } from "./LeadService";
@@ -10,14 +11,14 @@ import { Logger } from "../utils/Logger";
 
 export class AgentService {
 	/**
-	 * 全体のワークフローを実行します。
-	 * 1. 新しいリードをApolloから取得して保存
-	 * 2. 未処理のリード（PENDING等）を順番に処理
+	 * 执行整体工作流。
+	 * 1. 从Apollo获取新潜在客户并保存
+	 * 2. 按顺序处理未处理的潜在客户（PENDING等）
 	 */
 	static async runWorkflow() {
 		Logger.info("=== Starting FlowSales Workflow ===");
 
-		// 1日の上限チェック
+		// 检查每日发送上限
 		const dailyLimit = parseInt(process.env.DAILY_SEND_LIMIT || "50", 10);
 		const sentToday = await LeadService.getSentCountToday();
 		if (sentToday >= dailyLimit) {
@@ -27,7 +28,7 @@ export class AgentService {
 			return;
 		}
 
-		// 1. Apolloから新しいリードを取得して保存
+		// 1. 从Apollo获取新潜在客户并保存
 		Logger.info("Fetching new leads from Apollo...");
 		try {
 			const searchResults = await ApolloService.searchLeads(["CTO", "Founder"]);
@@ -41,7 +42,7 @@ export class AgentService {
 			Logger.error("Failed to fetch leads from Apollo:", error);
 		}
 
-		// 2. 未処理のリードを処理
+		// 2. 处理未处理的潜在客户
 		await AgentService.processPendingLeads();
 
 		// 3. 通知
@@ -54,10 +55,10 @@ export class AgentService {
 	}
 
 	/**
-	 * DBに保存されている未処理のリードを順次リサーチ・送信します。
+	 * 按顺序对数据库中保存的未处理潜在客户进行研究和发送。
 	 */
 	static async processPendingLeads() {
-		// 優先順位: PERSONALIZED (承認待ち以外で送信直前) > RESEARCHED > PENDING
+		// 优先级: PERSONALIZED (待批准状态以外，发送前) > RESEARCHED > PENDING
 		const statuses: (
 			| "APPROVED"
 			| "PERSONALIZED"
@@ -73,7 +74,7 @@ export class AgentService {
 			Logger.info(`Processing ${leads.length} leads with status: ${status}`);
 
 			for (const lead of leads) {
-				// 送信済み上限を再チェック
+				// 再次检查发送上限
 				const sentToday = await LeadService.getSentCountToday();
 				const dailyLimit = parseInt(process.env.DAILY_SEND_LIMIT || "50", 10);
 				if (sentToday >= dailyLimit) {
@@ -85,7 +86,7 @@ export class AgentService {
 
 				try {
 					await AgentService.executeLeadWorkflow(lead);
-					// レートリミット回避のため、1件ごとに5秒待機
+					// 为避免速率限制，每条记录等待5秒
 					await new Promise((resolve) => setTimeout(resolve, 5000));
 				} catch (error) {
 					Logger.error(`Fatal error in lead loop for ${lead.email}:`, error);
@@ -95,7 +96,7 @@ export class AgentService {
 	}
 
 	/**
-	 * 単一のリードをApolloの生データから処理します（テスト・デバッグ用）。
+	 * 处理来自Apollo的单个原始潜在客户（用于测试/调试）。
 	 */
 	static async processSingleLead(rawLead: ApolloPerson) {
 		const lead = await AgentService.saveRawLead(rawLead);
@@ -107,7 +108,7 @@ export class AgentService {
 	}
 
 	/**
-	 * Apolloから来た生データをDBに保存（重複チェック込み）
+	 * 将从Apollo获取的原始数据保存到数据库（包含去重检查）
 	 */
 	private static async saveRawLead(rawLead: ApolloPerson) {
 		const email = rawLead.email;
@@ -134,7 +135,7 @@ export class AgentService {
 				Logger.info(`New lead saved: ${email}`);
 				return lead;
 			}
-			// 既存リードの場合は再取得（emailで特定）
+			// 如果是已存在的潜在客户，则重新获取（通过email识别）
 			return await LeadService.getLeadByEmail(email);
 		} catch (error) {
 			Logger.error(`Failed to save lead ${email}:`, error);
@@ -143,11 +144,11 @@ export class AgentService {
 	}
 
 	/**
-	 * 保存済みの1件のリードを、現在のステータスから最後まで進める
+	 * 将已保存的单条潜在客户从当前状态推进到最后
 	 */
 	private static async executeLeadWorkflow(lead: any) {
 		try {
-			// 2. リサーチ
+			// 2. 研究
 			if (lead.status === "PENDING" || lead.status === "FAILED") {
 				if (!lead.website) {
 					throw new Error("Website URL is missing for research");
@@ -161,20 +162,20 @@ export class AgentService {
 				const [updated] = await LeadService.updateLead(lead.id, {
 					techStack: research.techStack,
 					researchSummary: research.businessSummary,
-					crawledContent: JSON.stringify(research), // 全データを保存
+					crawledContent: JSON.stringify(research), // 保存全部数据
 					status: "RESEARCHED",
 				});
 				lead = updated;
 			}
 
-			// 3. パーソナライズ
+			// 3. 个性化
 			if (lead.status === "RESEARCHED") {
 				Logger.info(`[Personalize] ${lead.email}`);
 				let researchData;
 				try {
 					researchData = JSON.parse(lead.crawledContent || "{}");
 				} catch (e) {
-					// 互換性維持: 古い形式の場合は最低限のデータを構成
+					// 保持兼容性：如果是旧格式，则构建最小数据集
 					researchData = {
 						techStack: lead.techStack,
 						businessSummary: lead.researchSummary,
@@ -185,7 +186,7 @@ export class AgentService {
 					};
 				}
 
-				// 役職に応じてスタイルを選択
+				// 根据职位选择风格
 				const jobTitle = (lead.jobTitle || "").toUpperCase();
 				const style =
 					jobTitle.includes("CTO") ||
@@ -209,19 +210,19 @@ export class AgentService {
 				lead = updated;
 			}
 
-			// 4. 送信判定
+			// 4. 发送判定
 			if (lead.status === "PERSONALIZED") {
 				if (process.env.REQUIRE_APPROVAL === "true") {
 					Logger.info(`[Wait Approval] ${lead.email}`);
 					await LeadService.updateLead(lead.id, { status: "WAITING_APPROVAL" });
-					// Slackへ詳細通知
+					// 发送详细通知到Slack
 					await SlackService.notifyNewLeadForApproval(lead);
 					return;
 				}
-				lead.status = "APPROVED"; // 承認不要なら自動的にAPPROVED扱い
+				lead.status = "APPROVED"; // 如果不需要批准，则自动视为已批准
 			}
 
-			// 5. 送信
+			// 5. 发送
 			if (lead.status === "APPROVED") {
 				Logger.info(`[Send Approved] ${lead.email}`);
 				await AgentService.processSending(
@@ -242,7 +243,7 @@ export class AgentService {
 	}
 
 	/**
-	 * 送信処理（待機を含む）
+	 * 发送处理（包含等待时间）
 	 */
 	private static async processSending(
 		id: string,
@@ -251,7 +252,7 @@ export class AgentService {
 		lastName: string,
 		body: string,
 	) {
-		// セーフティ・スロットル (60秒〜180秒)
+		// 安全节流 (60秒〜180秒)
 		const waitTime = Math.floor(Math.random() * (180 - 60 + 1) + 60);
 		Logger.info(`[Send] Waiting ${waitTime}s for ${email}...`);
 		await new Promise((resolve) => setTimeout(resolve, waitTime * 1000));
@@ -265,3 +266,4 @@ export class AgentService {
 		Logger.info(`[Done] Email sent to ${email}`);
 	}
 }
+```
