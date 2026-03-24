@@ -4,9 +4,9 @@ import { leads } from "../db/schema";
 
 export class LeadService {
 	/**
-	 * リードを取得または作成し、重複を防ぎます。
-	 * @param leadData 登録するリード情報
-	 * @returns 登録されたリード、または既に存在する場合はnull
+	 * 获取或创建潜在客户，防止重复。
+	 * @param leadData 要注册的潜在客户信息
+	 * @returns 已注册的潜在客户，若已存在则返回null
 	 */
 	static async upsertLead(leadData: typeof leads.$inferInsert) {
 		if (!leadData.email) throw new Error("Email is required");
@@ -26,7 +26,7 @@ export class LeadService {
 	}
 
 	/**
-	 * メールアドレスからリードを1件取得します。
+	 * 根据邮箱地址获取一条潜在客户记录。
 	 */
 	static async getLeadByEmail(email: string) {
 		return await db
@@ -37,7 +37,7 @@ export class LeadService {
 	}
 
 	/**
-	 * 指定したステータスのリードを一覧取得します。
+	 * 获取指定状态的潜在客户列表。
 	 */
 	static async getLeadsByStatus(
 		status:
@@ -57,8 +57,8 @@ export class LeadService {
 	}
 
 	/**
-	 * リードのステータスと情報を更新します。
-	 * @param id リードID
+	 * 更新潜在客户的状态和信息。
+	 * @param id 潜在客户ID
 	 * @param updateData 更新内容
 	 */
 	static async updateLead(
@@ -73,7 +73,7 @@ export class LeadService {
 	}
 
 	/**
-	 * 今日送信されたリードの数を取得します。
+	 * 获取今日已发送的潜在客户数量。
 	 */
 	static async getSentCountToday() {
 		const today = new Date();
@@ -91,7 +91,7 @@ export class LeadService {
 	}
 
 	/**
-	 * 全体の集計データを取得します。
+	 * 获取整体统计数据。
 	 */
 	static async getGlobalStats() {
 		const result = await db
