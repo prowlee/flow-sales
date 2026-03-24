@@ -5,7 +5,7 @@ import { ExclusionService } from "./ExclusionService";
 
 export class SettingsService {
 	/**
-	 * 設定値を取得します。
+	 * 获取设置值。
 	 */
 	static async getSetting(key: string): Promise<string | null> {
 		const result = await db
@@ -17,7 +17,7 @@ export class SettingsService {
 	}
 
 	/**
-	 * 設定値を保存または更新します。
+	 * 保存或更新设置值。
 	 */
 	static async updateSetting(key: string, value: string) {
 		const existing = await this.getSetting(key);
@@ -32,7 +32,7 @@ export class SettingsService {
 	}
 
 	/**
-	 * 除外ドメインのリストを取得します（DB + デフォルト + Env）。
+	 * 获取排除域名列表（DB + 默认 + 环境变量）。
 	 */
 	static async getExcludedDomains(): Promise<string[]> {
 		const dbValue = await this.getSetting("EXCLUDED_DOMAINS");
@@ -45,7 +45,7 @@ export class SettingsService {
 	}
 
 	/**
-	 * 指定されたメールが除外対象か判定します（DB設定を考慮）。
+	 * 判断指定邮箱是否为排除对象（考虑数据库设置）。
 	 */
 	static async isExcluded(email: string): Promise<boolean> {
 		if (!email) return true;
