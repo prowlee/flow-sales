@@ -7,7 +7,7 @@ import { SettingsService } from "./services/SettingsService";
 const app = new Hono();
 app.use("*", logger());
 
-// 起動時に一回実行し、その後定期実行する仕組み
+// 启动时执行一次，之后定期执行的机制
 const runAutomatedWorkflow = async () => {
 	console.log(`[Scheduled Task] Starting at ${new Date().toISOString()}`);
 	try {
@@ -17,11 +17,11 @@ const runAutomatedWorkflow = async () => {
 	}
 };
 
-// 12時間おきに定期実行
+// 每12小时定期执行
 const INTERVAL_MS = 12 * 60 * 60 * 1000;
 setInterval(runAutomatedWorkflow, INTERVAL_MS);
 
-// 起動から5秒後に初回実行（1回のみ実行されるように徹底）
+// 启动后5秒首次执行（确保只执行一次）
 setTimeout(() => {
 	console.log("🚀 Server is ready. Starting initial workflow...");
 	runAutomatedWorkflow();
@@ -67,7 +67,7 @@ app.get("/", (c) => {
 });
 
 /**
- * 手動実行用エンドポイント
+ * 手动执行端点
  */
 app.get("/run-now", async (c) => {
 	// バックグラウンドで実行
@@ -76,7 +76,7 @@ app.get("/run-now", async (c) => {
 });
 
 /**
- * ダッシュボード用データAPI
+ * 仪表盘数据API
  */
 app.get("/api/data", async (c) => {
 	const waiting = await LeadService.getLeadsByStatus("WAITING_APPROVAL");
@@ -95,7 +95,7 @@ app.get("/api/data", async (c) => {
 });
 
 /**
- * 設定取得・更新用API
+ * 设置获取/更新API
  */
 app.get("/api/settings", async (c) => {
 	const excludedDomains = await SettingsService.getSetting("EXCLUDED_DOMAINS");
@@ -109,7 +109,7 @@ app.post("/api/settings", async (c) => {
 });
 
 /**
- * 送信承認ダッシュボード (HTML - 移行期間用)
+ * 发送批准仪表盘 (HTML - 迁移期间使用)
  */
 app.get("/dashboard", async (c) => {
 	const waiting = await LeadService.getLeadsByStatus("WAITING_APPROVAL");
@@ -386,7 +386,7 @@ app.get("/dashboard", async (c) => {
 });
 
 /**
- * 承認・却下用API
+ * 批准/拒绝API
  */
 app.post("/approve/:id", async (c) => {
 	const id = c.req.param("id");
