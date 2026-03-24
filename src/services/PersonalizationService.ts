@@ -10,7 +10,7 @@ export class PersonalizationService {
 	private static PRODUCT_RESTRICTIONS = process.env.SDR_PRODUCT_RESTRICTIONS;
 
 	/**
-	 * リード情報とリサーチ結果に基づいてパーソナライズされたメールを生成します。
+	 * 根据潜在客户信息和调研结果生成个性化邮件。
 	 */
 	static async generateEmail(
 		leadInfo: any,
@@ -20,7 +20,7 @@ export class PersonalizationService {
 		if (!PersonalizationService.ANTHROPIC_API_KEY)
 			throw new Error("ANTHROPIC_API_KEY is missing");
 
-		// 必須設定のバリデーション
+		// 必需配置的验证
 		if (!this.SENDER_NAME || !this.PRODUCT_NAME || !this.PRODUCT_DESCRIPTION) {
 			throw new Error(
 				"SDR configuration is incomplete. Please set SDR_SENDER_NAME, SDR_PRODUCT_NAME, and SDR_PRODUCT_DESCRIPTION in .env",
@@ -32,54 +32,54 @@ export class PersonalizationService {
 		});
 
 		const prompt = `
-      あなたは、${this.PRODUCT_NAME}を提供している${this.SENDER_TITLE || ""}の${this.SENDER_NAME}です。
+      你是提供${this.PRODUCT_NAME}的${this.SENDER_TITLE || ""}${this.SENDER_NAME}。
       
-      【製品/サービス情報】
+      【产品/服务信息】
       - 名称: ${this.PRODUCT_NAME}
       - 内容: ${this.PRODUCT_DESCRIPTION}
-      - 制約/対象外: ${this.PRODUCT_RESTRICTIONS || "特に無し"}
+      - 限制/不适用对象: ${this.PRODUCT_RESTRICTIONS || "无特别限制"}
       
-      【重要】あなたは「${this.PRODUCT_NAME}」の運営者であり、提案相手の会社（${leadInfo.companyName}様）の人間ではありません。
-      外部の専門家/起業家として、同じ立場の${leadInfo.firstName}様に「${this.PRODUCT_NAME}」を提案してください。
+      【重要】你是「${this.PRODUCT_NAME}」的运营者，并非对方公司（${leadInfo.companyName}）的人员。
+      请作为外部专家/创业者，向同为创业者的${leadInfo.firstName}先生/女士推荐「${this.PRODUCT_NAME}」。
 
-      【送信スタイル】
-      今回のスタイル: ${style}
-      - TECHNICALを選択時: ${leadInfo.companyName} の技術スタック（${researchData.techStack}）やエンジニア文化に触れ、開発効率の課題に共感する。
-      - BUSINESSを選択時: ${researchData.recentNews} や事業成長（${researchData.businessSummary}）に触れ、市場投入速度（TTM）の最大化とROIの観点から提案する。
+      【发送风格】
+      本次风格: ${style}
+      - 选择 TECHNICAL 时: 提及${leadInfo.companyName}的技术栈（${researchData.techStack}）和工程师文化，对开发效率的课题产生共鸣。
+      - 选择 BUSINESS 时: 提及${researchData.recentNews}和业务增长（${researchData.businessSummary}），从市场投入速度（TTM）最大化和ROI的角度提出建议。
 
-      【ターゲット情報】
-      氏名: ${leadInfo.firstName} ${leadInfo.lastName} 様
-      役職: ${leadInfo.jobTitle}
-      会社名: ${leadInfo.companyName}
+      【目标信息】
+      姓名: ${leadInfo.firstName} ${leadInfo.lastName} 先生/女士
+      职位: ${leadInfo.jobTitle}
+      公司名称: ${leadInfo.companyName}
       
-      【リサーチ結果（インテントデータを最優先に！）】
-      なぜ今なのか（最重要）: ${researchData.whyNowHook}
-      採用募集状況: ${researchData.hiringIntent}
-      最新ニュース: ${researchData.recentNews}
-      技術スタック: ${researchData.techStack}
-      ビジネス要約: ${researchData.businessSummary}
-      推測される課題: ${researchData.technicalPainPoints}
+      【调研结果（优先使用意图数据！）】
+      为何现在是合适时机（最重要）: ${researchData.whyNowHook}
+      招聘情况: ${researchData.hiringIntent}
+      最新动态: ${researchData.recentNews}
+      技术栈: ${researchData.techStack}
+      业务摘要: ${researchData.businessSummary}
+      推测的课题: ${researchData.technicalPainPoints}
 
-      【絶対に守るべきルール】
-      1. AIっぽさを徹底的に排除する:
-         - 「〜しております」を多用しない。「〜しています」「〜だと思っています」など、少し柔らかく。
-         - 「突然のご連絡失礼します」「お忙しい中恐縮ですが」は厳禁。
-         - 「お役に立てれば幸いです」「ご検討いただけますと幸いです」などの定型表現を使わない。
-         - 挨拶は「${leadInfo.firstName}さん、こんにちは（または、はじめまして）」など、人間味のある形にする。
-      2. 冒頭で「信頼」を勝ち取る:
-         - 冒頭の一文は必ず、${researchData.whyNowHook} や ${researchData.hiringIntent}、${researchData.recentNews} に基づいた「今、あなたに連絡した具体的かつ個人的な理由」から始めてください。
-      3. 専門家/起業家同士の「対話」にする:
-         - ${researchData.technicalPainPoints}について、自身の経験や専門知識を交えて共感を示す。
-      4. シンプルなCTA:
-         - いきなりミーティングを組もうとせず、「情報交換」や「資料送付」といった低いハードルを設定する。
+      【必须遵守的规则】
+      1. 彻底排除AI感:
+         - 避免过度使用「～でございます」等生硬表达。使用更柔和的「～です」「～だと思います」。
+         - 严禁使用「冒昧打扰」「百忙之中深感抱歉」等客套话。
+         - 避免使用「如能为您效劳将不胜荣幸」「烦请考虑」等固定表达。
+         - 问候语使用「${leadInfo.firstName}先生/女士，您好（或，初次见面）」等有人情味的形式。
+      2. 在开头赢得「信任」:
+         - 开篇第一句话必须基于${researchData.whyNowHook}、${researchData.hiringIntent}或${researchData.recentNews}，写出「现在联系你的具体且个性化的理由」。
+      3. 形成专家/创业者之间的「对话」:
+         - 结合自身经验或专业知识，对${researchData.technicalPainPoints}表示理解和共鸣。
+      4. 简单的行动号召:
+         - 不要直接要求安排会议，设置「信息交换」「资料发送」等低门槛的下一步。
 
-      【出力形式】
-      件名: [相手が思わず開く、パーソナライズされた15文字以内のタイトル]
-      本文: [上記のルールを守った本文]
+      【输出格式】
+      主题: [让对方忍不住打开的、个性化的15字以内标题]
+      正文: [遵循上述规则的正文]
 
       --
       ${this.SENDER_NAME} | ${this.SENDER_TITLE}
-      ${this.PRODUCT_NAME} 担当者
+      ${this.PRODUCT_NAME} 负责人
     `;
 
 		const response = await anthropic.messages.create({
