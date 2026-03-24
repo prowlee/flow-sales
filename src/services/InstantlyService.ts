@@ -5,7 +5,7 @@ export class InstantlyService {
 	private static CAMPAIGN_ID = process.env.INSTANTLY_CAMPAIGN_ID;
 
 	/**
-	 * Instantly.aiのキャンペーンにリードを追加します。
+	 * 将潜在客户添加到 Instantly.ai 的营销活动中。
 	 */
 	static async addLeadToCampaign(
 		email: string,
