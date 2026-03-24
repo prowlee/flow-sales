@@ -4,15 +4,15 @@ import { db } from "../db";
 import { leads } from "../db/schema";
 import { eq } from "drizzle-orm";
 
-describe("LeadService (Integration)", () => {
+describe("LeadService (集成测试)", () => {
     const TEST_EMAIL = "integration-test@example.com";
 
     afterEach(async () => {
-        // テスト用データのクリーンアップ
+        // 清理测试数据
         await db.delete(leads).where(eq(leads.email, TEST_EMAIL));
     });
 
-	it("メールアドレスがない場合にエラーを投げること", async () => {
+	it("邮箱地址为空时应抛出错误", async () => {
 		const invalidLead = {
 			firstName: "John",
 			lastName: "Doe",
@@ -25,7 +25,7 @@ describe("LeadService (Integration)", () => {
 		);
 	});
 
-    it("新しいリードを正常に登録できること", async () => {
+    it("应能成功注册新的潜在客户", async () => {
         const leadData = {
             email: TEST_EMAIL,
             firstName: "Test",
@@ -38,12 +38,12 @@ describe("LeadService (Integration)", () => {
         expect(newLead).not.toBeNull();
         expect(newLead?.email).toBe(TEST_EMAIL);
 
-        // 重複登録のチェック
+        // 检查重复注册
         const duplicateResult = await LeadService.upsertLead(leadData);
         expect(duplicateResult).toBeNull();
     });
 
-    it("ステータスによるフィルタリングが正しく機能すること", async () => {
+    it("按状态筛选应能正常工作", async () => {
         await LeadService.upsertLead({
             email: TEST_EMAIL,
             status: "RESEARCHED" as const,
@@ -56,7 +56,7 @@ describe("LeadService (Integration)", () => {
         expect(pendingLeads.some(l => l.email === TEST_EMAIL)).toBe(false);
     });
 
-    it("リード情報の更新ができること", async () => {
+    it("应能更新潜在客户信息", async () => {
         const lead = await LeadService.upsertLead({
             email: TEST_EMAIL,
             status: "PENDING" as const,
@@ -74,7 +74,7 @@ describe("LeadService (Integration)", () => {
         expect(updated?.sentAt).not.toBeNull();
     });
 
-    it("今日の送信件数を正しく集計できること", async () => {
+    it("应能正确统计今日发送数量", async () => {
         await LeadService.upsertLead({
             email: TEST_EMAIL,
             status: "SENT" as const,
@@ -85,7 +85,7 @@ describe("LeadService (Integration)", () => {
         expect(count).toBeGreaterThan(0);
     });
 
-    it("グローバル統計を正しく取得できること", async () => {
+    it("应能正确获取全局统计信息", async () => {
         await LeadService.upsertLead({
             email: TEST_EMAIL,
             status: "FAILED" as const,
@@ -97,13 +97,13 @@ describe("LeadService (Integration)", () => {
     });
 });
 
-// LeadServiceが依存しているdbをモック化するデモ
-describe("LeadService (Mock Example)", () => {
-	it("メールアドレスがない場合にエラーを投げること", async () => {
+// 模拟依赖db的LeadService演示
+describe("LeadService (模拟示例)", () => {
+	it("邮箱地址为空时应抛出错误", async () => {
 		const invalidLead = {
 			firstName: "John",
 			lastName: "Doe",
-			email: "", // 無効なメール
+			email: "", // 无效邮箱
 			jobTitle: "CTO",
 		} as any;
 
@@ -112,10 +112,10 @@ describe("LeadService (Mock Example)", () => {
 		);
 	});
 
-	// ロジックのテスト例
-	it("今日送信されたリード数が数値として返ること", async () => {
-		// 実際にはDBを叩かずにモックに差し替えることも可能ですが、
-		// ここではメソッドが定義されていることと、基本的な動作を確認します。
+	// 逻辑测试示例
+	it("今日发送的潜在客户数量应返回数值类型", async () => {
+		// 实际上可以不实际调用数据库，而替换为模拟对象，
+		// 但这里仅确认方法已定义且基本行为正常。
 		const count = await LeadService.getSentCountToday();
 		expect(typeof count).toBe("number");
 	});
