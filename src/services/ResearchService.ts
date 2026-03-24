@@ -6,9 +6,9 @@ export class ResearchService {
 	private static ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 
 	/**
-	 * ウェブサイトの内容をFirecrawlで取得し、Claudeで要約・解析します。
-	 * @param url 調査対象のURL
-	 * @param options クロールオプション
+	 * 使用Firecrawl获取网站内容，并使用Claude进行摘要和分析。
+	 * @param url 调查对象的URL
+	 * @param options 抓取选项
 	 */
 	static async researchWebsite(
 		url: string,
@@ -22,7 +22,7 @@ export class ResearchService {
 		let combinedMarkdown = "";
 
 		if (options.mode === "scrape") {
-			// 1. Firecrawlでスクレイピング
+			// 1. 使用Firecrawl进行抓取
 			const scrapeResponse = await fetch(
 				"https://api.firecrawl.dev/v1/scrape",
 				{
@@ -45,7 +45,7 @@ export class ResearchService {
 			const scrapeData = (await scrapeResponse.json()) as any;
 			combinedMarkdown = scrapeData.data?.markdown || "";
 		} else {
-			// 2. Firecrawlでクロール (最大5ページ)
+			// 2. 使用Firecrawl进行爬取（最多5页）
 			Logger.info(`Starting crawl for ${url}...`);
 			const crawlResponse = await fetch("https://api.firecrawl.dev/v1/crawl", {
 				method: "POST",
@@ -59,7 +59,7 @@ export class ResearchService {
 					scrapeOptions: {
 						formats: ["markdown"],
 					},
-					// 会社概要、採用、ニュース等を優先的に含めるよう試みる
+					// 尝试优先包含公司概要、招聘、新闻等
 					allowBackwardLinks: false,
 					maxDepth: 2,
 				}),
@@ -71,12 +71,12 @@ export class ResearchService {
 
 			const { id } = (await crawlResponse.json()) as { id: string };
 
-			// クロール結果をポーリング
+			// 轮询爬取结果
 			let status = "running";
 			let crawlData: any = null;
 
 			while (status === "running" || status === "scraping") {
-				await new Promise((resolve) => setTimeout(resolve, 3000)); // 3秒待機
+				await new Promise((resolve) => setTimeout(resolve, 3000)); // 等待3秒
 				const pollResponse = await fetch(
 					`https://api.firecrawl.dev/v1/crawl/${id}`,
 					{
@@ -102,33 +102,33 @@ export class ResearchService {
 			}
 		}
 
-		// 2. Claudeで解析
+		// 2. 使用Claude进行分析
 		const anthropic = new Anthropic({
 			apiKey: ResearchService.ANTHROPIC_API_KEY,
 		});
 
-		// 20,000トークンの制限（Tier 1）等に配慮し、入力を一定文字数でカットする
+		// 考虑到20,000 token的限制（Tier 1），将输入截断到一定字符数
 		const truncatedMarkdown = combinedMarkdown.substring(0, 6000);
 
 		const response = await anthropic.messages.create({
 			model: process.env.ANTHROPIC_MODEL || "claude-3-7-sonnet-latest",
 			max_tokens: 1500,
 			system: `
-        あなたは一流のセールスリサーチャー兼技術コンサルタントです。
-        提供されたウェブサイトのマークダウンから、決定権者（CTO/Founder）の心に刺さる営業メッセージを作成するための重要情報を抽出してください。
-        特に「採用情報（エンジニア募集など）」「最近のプロダクト発表」「資金調達」「プレスリリース」など、「今、提案すべき理由」となるシグナルを重視してください。
+        你是一流的销售研究员兼技术顾问。
+        请从提供的网站Markdown中，提取用于创建打动决策者（CTO/创始人）的销售信息的重要信息。
+        请特别关注“招聘信息（如招聘工程师）”“近期产品发布”“融资”“新闻稿”等能体现“现在应该提案的理由”的信号。
 
-        【重要】回答は必ず「純粋なJSONのみ」を出力してください。
-        Markdownのコードブロック（ \`\`\`json ... \`\`\` ）や解説文は一切不要です。
+        【重要】回答请仅输出“纯JSON格式”。
+        不需要Markdown代码块（ \`\`\`json ... \`\`\` ）或任何解释性文字。
         
-        形式：
+        格式：
         {
-          "techStack": "使用技術や言語",
-          "businessSummary": "事業内容の簡潔な要約",
-          "recentNews": "最近の大きなニュース",
-          "technicalPainPoints": "想定される技術的課題",
-          "hiringIntent": "採用募集状況（特にエンジニア）",
-          "whyNowHook": "『今』提案すべき具体的な理由（インテント）"
+          "techStack": "使用的技术或语言",
+          "businessSummary": "业务内容的简洁摘要",
+          "recentNews": "近期重大新闻",
+          "technicalPainPoints": "推测的技术课题",
+          "hiringIntent": "招聘情况（特别是工程师）",
+          "whyNowHook": "『现在』应该提案的具体理由（意图）"
         }
       `,
 			messages: [{ role: "user", content: truncatedMarkdown }],
@@ -137,7 +137,7 @@ export class ResearchService {
 		try {
 			// @ts-expect-error
 			let content = response.content[0].text;
-			// 最初の { から 最後の } までを抽出してパースを強固にする
+			// 提取从第一个 { 到最后一个 } 的内容，增强解析的稳健性
 			const jsonMatch = content.match(/\{[\s\S]*\}/);
 			if (jsonMatch) {
 				content = jsonMatch[0];
