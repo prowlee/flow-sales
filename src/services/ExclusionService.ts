@@ -9,7 +9,7 @@ export class ExclusionService {
 	];
 
 	/**
-	 * 指定されたメールアドレスのドメインが除外リストに含まれているか判定します。
+	 * 判断指定邮箱地址的域名是否包含在排除列表中。
 	 */
 	static isExcluded(email: string): boolean {
 		if (!email) return true;
@@ -24,13 +24,13 @@ export class ExclusionService {
 		const allExcluded = [...this.DEFAULT_EXCLUDED_DOMAINS, ...envExcluded];
 
 		return allExcluded.some((excluded) => {
-			// 完全一致、またはサブドメイン（例: apple.com を除外した場合に products.apple.com も除外）
+			// 完全匹配，或子域名匹配（例如：排除 apple.com 时，products.apple.com 也会被排除）
 			return domain === excluded || domain.endsWith(`.${excluded}`);
 		});
 	}
 
 	/**
-	 * 現在の除外リストを返します。
+	 * 返回当前的排除列表。
 	 */
 	static getExcludedDomains(): string[] {
 		const envExcluded = process.env.EXCLUDED_DOMAINS
