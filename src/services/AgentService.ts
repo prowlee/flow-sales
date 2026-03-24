@@ -1,4 +1,3 @@
-```typescript
 import { type ApolloPerson, ApolloService } from "./ApolloService";
 import { InstantlyService } from "./InstantlyService";
 import { LeadService } from "./LeadService";
@@ -266,4 +265,4 @@ export class AgentService {
 		Logger.info(`[Done] Email sent to ${email}`);
 	}
 }
-```
+
